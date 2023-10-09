@@ -1,6 +1,7 @@
 package com.rvrk.starter;
 
 import com.rvrk.starter.util.ConnectionManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -18,9 +19,35 @@ public class PreparedStatementRunner {
                 .of(2020, 10, 1)
                 .atStartOfDay(), LocalDateTime.now());
         System.out.println(flightsBetween);
+
+        checkMetaData();
     }
 
-    private static List<Long> getFlightsBetween(LocalDateTime start, LocalDateTime end) throws SQLException {
+    private static void checkMetaData() throws SQLException {
+        try (var connection = ConnectionManager.open()) {
+            var metaData = connection.getMetaData();
+            var catalogs = metaData.getCatalogs();
+            while (catalogs.next()) {
+                var catalogsString = catalogs.getString(1);
+//                System.out.println(catalogsString);
+
+                var schemas = metaData.getSchemas();
+                while (schemas.next()) {
+                    var tableSchem = schemas.getString("TABLE_SCHEM");
+//                    System.out.println(tableSchem);
+
+                    var tables = metaData.getTables(catalogsString, tableSchem, "%", new String[]{"TABLE"});
+                    if (tableSchem.equals("public")) {
+                        while (tables.next()) {
+                            System.out.println(tables.getString("TABLE_NAME"));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static @NotNull List<Long> getFlightsBetween(LocalDateTime start, LocalDateTime end) throws SQLException {
         String sql = """
                 SELECT id
                 FROM flight
@@ -31,6 +58,11 @@ public class PreparedStatementRunner {
 
         try (var connection = ConnectionManager.open();
              var preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setFetchSize(50);
+            preparedStatement.setQueryTimeout(10);
+            preparedStatement.setMaxRows(100);
+
             System.out.println(preparedStatement);
             preparedStatement.setTimestamp(1, Timestamp.valueOf(start));
             System.out.println(preparedStatement);
@@ -45,7 +77,7 @@ public class PreparedStatementRunner {
 
     }
 
-    private static List<Long> getTicketsByFlightId(Long flightId) throws SQLException {
+    private static @NotNull List<Long> getTicketsByFlightId(Long flightId) throws SQLException {
         String sql = """
                 SELECT id
                 FROM ticket
