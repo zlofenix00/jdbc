@@ -10,8 +10,6 @@ import java.sql.Statement;
 
 public class GeneratedKeysRunner {
     public static void main(String[] args) throws SQLException {
-        Class<Driver> driverClass = Driver.class;
-
         String sql = """
                INSERT INTO info(data)
                VALUES 
@@ -19,7 +17,7 @@ public class GeneratedKeysRunner {
                 """;
 
 
-        try (Connection connection = ConnectionManager.open();
+        try (Connection connection = ConnectionManager.get();
              Statement statement = connection.createStatement()) {
 
             System.out.println(connection.getTransactionIsolation());

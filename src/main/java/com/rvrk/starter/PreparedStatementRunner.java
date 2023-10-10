@@ -20,11 +20,15 @@ public class PreparedStatementRunner {
                 .atStartOfDay(), LocalDateTime.now());
         System.out.println(flightsBetween);
 
-        checkMetaData();
+        try {
+            checkMetaData();
+        }finally {
+            ConnectionManager.closeConnections();
+        }
     }
 
     private static void checkMetaData() throws SQLException {
-        try (var connection = ConnectionManager.open()) {
+        try (var connection = ConnectionManager.get()) {
             var metaData = connection.getMetaData();
             var catalogs = metaData.getCatalogs();
             while (catalogs.next()) {
@@ -56,7 +60,7 @@ public class PreparedStatementRunner {
 
         List<Long> result = new ArrayList<>();
 
-        try (var connection = ConnectionManager.open();
+        try (var connection = ConnectionManager.get();
              var preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setFetchSize(50);
@@ -86,7 +90,7 @@ public class PreparedStatementRunner {
 
         List<Long> result = new ArrayList<>();
 
-        try (Connection connection = ConnectionManager.open();
+        try (Connection connection = ConnectionManager.get();
              var prepareStatement = connection.prepareStatement(sql)
         ) {
             prepareStatement.setLong(1, flightId);

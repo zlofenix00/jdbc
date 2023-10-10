@@ -10,8 +10,6 @@ import java.sql.Statement;
 
 public class JdbcRunner {
     public static void main(String[] args) throws SQLException {
-        Class<Driver> driverClass = Driver.class;
-
         String sql = """
                 CREATE TABLE IF NOT EXISTS info
                 (
@@ -41,7 +39,7 @@ public class JdbcRunner {
                 """;
 
 
-        try (Connection connection = ConnectionManager.open();
+        try (Connection connection = ConnectionManager.get();
              Statement statement = connection.createStatement()) {
 
             System.out.println(connection.getTransactionIsolation());

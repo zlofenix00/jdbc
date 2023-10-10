@@ -24,7 +24,7 @@ public class SqlInjectionRunner {
 
         List<Long> result = new ArrayList<>();
 
-        try (Connection connection = ConnectionManager.open();
+        try (Connection connection = ConnectionManager.get();
              Statement statement = connection.createStatement()
         ) {
             var resultSet = statement.executeQuery(sql);
