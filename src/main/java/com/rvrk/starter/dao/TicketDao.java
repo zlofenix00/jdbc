@@ -1,5 +1,6 @@
 package com.rvrk.starter.dao;
 
+import com.rvrk.starter.dto.TicketFilter;
 import com.rvrk.starter.entity.Ticket;
 import com.rvrk.starter.exception.DaoException;
 import com.rvrk.starter.util.ConnectionManager;
@@ -9,6 +10,9 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.joining;
 
 public class TicketDao {
 
@@ -49,13 +53,49 @@ public class TicketDao {
     private TicketDao() {
     }
 
-    public List<Ticket> findAll(){
+    public List<Ticket> findAll(TicketFilter filter) {
+        List<Object> parameters = new ArrayList<>();
+        List<String> whereSql = new ArrayList<>();
+        if (filter.seatNo() != null) {
+            whereSql.add("seat_on LIKE ?");
+            parameters.add("%" + filter.seatNo() + "%");
+        }
+        if (filter.passengerName() != null) {
+            whereSql.add("passenger_name = ?");
+            parameters.add(filter.passengerName());
+        }
+        parameters.add(filter.limit());
+        parameters.add(filter.offset());
+        var where = whereSql.stream()
+                .collect(joining(" AND ", " WHERE ", " LIMIT ? OFFSET ?"));
+
+        var sql = FIND_ALL_SQL + where;
+
+        try (var connection = ConnectionManager.get();
+             var preparedStatement = connection.prepareStatement(sql)
+        ) {
+            for (int i = 0; i < parameters.size(); i++) {
+                preparedStatement.setObject(i + 1, parameters.get(i));
+            }
+            System.out.println(preparedStatement);
+            var resultSet = preparedStatement.executeQuery();
+            List<Ticket> tickets = new ArrayList<>();
+            while (resultSet.next()) {
+                tickets.add(buildTicket(resultSet));
+            }
+            return tickets;
+        } catch (SQLException e) {
+            throw new DaoException(e);
+        }
+    }
+
+    public List<Ticket> findAll() {
         try (var connection = ConnectionManager.get();
              var preparedStatement = connection.prepareStatement(FIND_ALL_SQL)
         ) {
             var resultSet = preparedStatement.executeQuery();
-            List<Ticket> tickets= new ArrayList<>();
-            while (resultSet.next()){
+            List<Ticket> tickets = new ArrayList<>();
+            while (resultSet.next()) {
                 tickets.add(buildTicket(resultSet));
             }
             return tickets;

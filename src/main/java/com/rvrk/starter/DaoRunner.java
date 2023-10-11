@@ -1,12 +1,20 @@
 package com.rvrk.starter;
 
 import com.rvrk.starter.dao.TicketDao;
+import com.rvrk.starter.dto.TicketFilter;
 import com.rvrk.starter.entity.Ticket;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public class DaoRunner {
     public static void main(String[] args) {
+        var ticketFilter = new TicketFilter(3, 0, "Лариса Привольная", "A1");
+        var tickets = TicketDao.getInstance().findAll(ticketFilter);
+        System.out.println(tickets);
+    }
+
+    private static void findAll() {
         var ticketDao = TicketDao.getInstance();
         var allTicket = ticketDao.findAll();
         System.out.println(allTicket);
